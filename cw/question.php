@@ -2,7 +2,10 @@
 try{
     include 'includes/DatabaseConnection.php';
 
-    $sql = 'SELECT id, questiontext, image FROM question';
+    $sql = 'SELECT question.id, questiontext, questiondate, image, user.name, user.email, Modulename FROM question 
+            INNER JOIN user ON question.userid = user.id
+            INNER JOIN module ON question.moduleid = module.id
+            ORDER BY question.id DESC';
     $questions = $pdo->query($sql);
     $title = 'Question list';
 

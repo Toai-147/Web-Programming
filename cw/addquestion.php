@@ -7,6 +7,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         die('Question text cannot be empty.');
     }
 
+    // Validate POST data
+    $userid = $_POST['userid'] ?? null;
+    $moduleid = $_POST['moduleid'] ?? null;
+    
+    if (!$userid || !$moduleid) {
+        die('Please select both a user and module');
+    }
+
     $imageName = null;
 
     if (isset($_FILES['image']) && $_FILES['image']['error'] !== UPLOAD_ERR_NO_FILE) {
@@ -44,20 +52,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $sql = 'INSERT INTO question (questiontext, questiondate, image) VALUES (:questiontext, CURDATE(), :image)';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':questiontext' => $questiontext,
-        ':image' => $imageName
-    ]);
+    $sql = 'INSERT INTO question (questiontext, questiondate, image, userid, moduleid) 
+            VALUES (:questiontext, CURDATE(), :image, :userid, :moduleid)';
+    
+    try {
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute([
+            ':questiontext' => $questiontext,
+            ':image' => $imageName,
+            ':userid' => $userid,
+            ':moduleid' => $moduleid
+        ]);
 
-    header('Location: question.php');
-    exit;
+        header('Location: question.php');
+        exit;
+    } catch (PDOException $e) {
+        $title = 'Error';
+        $output = 'Error adding question: ' . $e->getMessage();
+    }
 } else {
     $title = 'Add a new Question';
+    $sql_u = 'SELECT * FROM user';
+    $users = $pdo->query($sql_u);
+    $sql_m = 'SELECT * FROM module';
+    $modules = $pdo->query($sql_m);
+    
     ob_start();
     include 'templates/addquestion.html.php';
     $output = ob_get_clean();
-    include 'templates/layout.html.php';
 }
+
+include 'templates/layout.html.php';
 ?>

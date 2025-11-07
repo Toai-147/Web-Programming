@@ -1,10 +1,12 @@
 <?php
-require 'includes/DatabaseConnection.php';
+include 'include/DatabaseConnection.php';
+include 'include/DatabaseFunctions.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $questiontext = trim($_POST['text'] ?? '');
-    if ($questiontext === '') {
-        die('Question text cannot be empty.');
+    $joketext = trim($_POST['joketext'] ?? '');
+    $categoryid = $_POST['categoryid'] ?? '';
+    if ($joketext === '' || $categoryid === '') {
+        die('Joke text and category are required.');
     }
 
     $imageName = null;
@@ -14,8 +16,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die('File upload failed with code: ' . $_FILES['image']['error']);
         }
 
-        if ($_FILES['image']['size'] > 10 * 1024 * 1024) {
-            die('Image too large. Max 10MB.');
+        if ($_FILES['image']['size'] > 2 * 1024 * 1024) {
+            die('Image too large. Max 2MB.');
         }
 
         $finfo = new finfo(FILEINFO_MIME_TYPE);
@@ -33,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $ext = $allowed[$mime];
         $imageName = bin2hex(random_bytes(8)) . '.' . $ext;
 
-        $uploadDir = __DIR__ . '/image';
+        $uploadDir = __DIR__ . '/images';
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
         }
@@ -44,19 +46,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    $sql = 'INSERT INTO question (questiontext, questiondate, image) VALUES (:questiontext, CURDATE(), :image)';
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        ':questiontext' => $questiontext,
-        ':image' => $imageName
-    ]);
+    // sau khi xử lý upload và $imageName đã sẵn sàng
+    // lấy id author/category từ form (tùy tên trường trong template của bạn)
+    $authorid   = $_POST['authorid'] ?? $_POST['authors'] ?? null;
+    $categoryid = $_POST['category'] ?? $_POST['categorys'] ?? null;
 
-    header('Location: question.php');
+    // Nếu addJoke có tham số image thì truyền $imageName, nếu không bỏ tham số này
+    addJoke($pdo, $joketext, $authorid, $categoryid, $imageName);
+
+    header('Location: jokes.php');
     exit;
 } else {
-    $title = 'Add a new Question';
+    $title = 'Add a new Joke';
+    $authors = AllAuthors($pdo);
+    $categorys = AllCategorys($pdo);
     ob_start();
-    include 'templates/addquestion.html.php';
+    include 'templates/addjoke.html.php';
     $output = ob_get_clean();
     include 'templates/layout.html.php';
 }

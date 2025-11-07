@@ -12,8 +12,15 @@
     <p style="margin:0 0 8px 0;">
       <?= htmlspecialchars($question['questiontext'], ENT_QUOTES, 'UTF-8') ?>
     </p>
+    <p style="margin:0; font-size:0.9em; color:#666;">
+      <?= htmlspecialchars($question['Modulename'], ENT_QUOTES, 'UTF-8') ?>
+      (by <a href="mailto:<?= htmlspecialchars($question['email'], ENT_QUOTES, 'UTF-8') ?>">
+        <?= htmlspecialchars($question['name'], ENT_QUOTES, 'UTF-8') ?>
+      </a>)
+    </p>
   </div>
 
+  <a href="editquestion.php?id=<?=$question['id']?>">Edit</a>
   <div>
     <form action="deletequestion.php" method="post" style="margin:0;">
       <input type="hidden" name="id" value="<?= $question['id'] ?>">
